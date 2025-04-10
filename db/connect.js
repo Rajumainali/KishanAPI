@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const uri = "mongodb://127.0.0.1:27017/API";  // Replace 'API' with your database name
+const uri = "mongodb+srv://rajumainali1111:Amrita%401700155@cluster0.5etzgpe.mongodb.net/API?retryWrites=true&w=majority&appName=Cluster0";
 
 const connectDB = async () => {
   try {
