@@ -1,10 +1,38 @@
 const Login = require("../models/Logins");
 const User = require("../models/Users");
 
+const loginUser = async (req, res) => {
+  const { username, password } = req.body;
+  console.log(req.body)
+  if (!username || !password) {
+    return res.status(400).json({ msg: 'Please provide both username and password' });
+  }
+
+  try {
+    // Find user in the 'Login' model by username
+    const user = await Login.findOne({ Username: username });
+
+    if (!user) {
+      return res.status(400).json({ msg: 'Invalid username or password' });
+    }
+
+    // Direct password comparison (not recommended for production)
+    if (user.Password !== password) {
+      return res.status(400).json({ msg: 'Invalid username or password' });
+    }
+
+    // If valid, send 'ok' response
+    return res.status(200).json({ msg: 'ok',"user":user.User });
+
+  } catch (error) {
+    res.status(500).json({ msg: 'Server error', error });
+  }
+};
+
 // GET: All login details (only Username and Password)
 const getAllDetails = async (req, res) => {
   try {
-    const data = await Login.find({}, 'Username Password -_id');
+    const data = await Login.find({}, 'Username Password User -_id');
     res.status(200).json(data); 
   } catch (error) {
     res.status(500).json({ msg: "Error fetching data", error });
@@ -25,7 +53,7 @@ const getAllProduct = async (req, res) => {
 const AddUsers = async (req, res) => {
   const data = req.body;
 
-  if (!data.user || !data.DailyInstallment || !data.Amount) {
+  if (!data.User || !data.DailyInstallment || !data.Amount||!data.ID) {
     return res.status(400).json({ msg: 'Please provide all fields (user, DailyInstallment, Amount)' });
   }
 
@@ -40,12 +68,12 @@ const AddUsers = async (req, res) => {
 
 // PUT: Update entire user by username
 const updateUser = async (req, res) => {
-  const { username } = req.params;
+  const { id } = req.params;
   const updateData = req.body;
 
   try {
     const updated = await User.findOneAndUpdate(
-      { user: username },
+      { ID: id },
       updateData,
       { new: true }
     );
@@ -60,12 +88,12 @@ const updateUser = async (req, res) => {
 
 // PATCH: Partial update by username
 const patchUser = async (req, res) => {
-  const { username } = req.params;
+  const { id } = req.params;
   const patchData = req.body;
 
   try {
     const patched = await User.findOneAndUpdate(
-      { user: username },
+      { ID: id },
       { $set: patchData },
       { new: true }
     );
@@ -80,10 +108,10 @@ const patchUser = async (req, res) => {
 
 // DELETE: Remove user by username
 const deleteUser = async (req, res) => {
-  const { username } = req.params;
+  const { id } = req.params;
 
   try {
-    const result = await User.findOneAndDelete({ user: username });
+    const result = await User.findOneAndDelete({ ID: id });
     if (!result) {
       return res.status(404).json({ msg: 'User not found' });
     }
@@ -99,5 +127,6 @@ module.exports = {
   AddUsers,
   updateUser,
   patchUser,
-  deleteUser
+  deleteUser,
+  loginUser
 };
