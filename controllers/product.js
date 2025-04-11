@@ -53,27 +53,38 @@ const getAllProduct = async (req, res) => {
 const AddUsers = async (req, res) => {
   const data = req.body;
 
-  if (!data.User || !data.DailyInstallment || !data.Amount||!data.ID) {
-    return res.status(400).json({ msg: 'Please provide all fields (user, DailyInstallment, Amount)' });
+  // Validate input fields
+  if (!data.id || !data.user || !data.dailyInstallment || !data.amount) {
+    return res.status(400).json({ msg: 'Please provide all fields (id, user, dailyInstallment, amount)' });
   }
 
   try {
+
+    const existingUser = await User.findOne({ id: data.id });
+
+    if (existingUser) {
+      return res.status(409).json({ msg: 'User with this ID already exists' }); // 409 Conflict
+    }
+
+    
     const newUser = new User(data);
     const result = await newUser.save();
     res.status(201).json({ msg: 'User created successfully', user: result });
   } catch (error) {
-    res.status(500).json({ msg: "Error adding user", error });
+    res.status(500).json({ msg: 'Error adding user', error });
   }
 };
+
 
 // PUT: Update entire user by username
 const updateUser = async (req, res) => {
   const { id } = req.params;
+  console.log(id);
   const updateData = req.body;
 
   try {
     const updated = await User.findOneAndUpdate(
-      { ID: id },
+      { id: id },
       updateData,
       { new: true }
     );
@@ -93,7 +104,7 @@ const patchUser = async (req, res) => {
 
   try {
     const patched = await User.findOneAndUpdate(
-      { ID: id },
+      { id: id },
       { $set: patchData },
       { new: true }
     );
@@ -111,7 +122,7 @@ const deleteUser = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await User.findOneAndDelete({ ID: id });
+    const result = await User.findOneAndDelete({ id: id });
     if (!result) {
       return res.status(404).json({ msg: 'User not found' });
     }

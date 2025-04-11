@@ -1,21 +1,20 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  ID:{
+  id:{
     type:Number,
     required: true,
     unique: true
   },
-  User: {
+  user: {
     type: String,
     required: true,
-    unique: true
   },
-  DailyInstallment:{
+  dailyInstallment:{
    require:true,
    type:Number
   },
-  Amount: {
+  amount: {
     type:Number,
     required: true
   },
