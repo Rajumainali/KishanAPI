@@ -34,10 +34,12 @@ const recordSchema = new mongoose.Schema({
   startingDate:{
    type:Date,
    required:true,
+  default: Date.now,
   },
   endingDate:{
     type:Date,
     required:true,
+     default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   }
 },{
   toJSON: {
