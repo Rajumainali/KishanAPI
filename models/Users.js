@@ -23,6 +23,14 @@ const recordSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  email:{
+    type: String,
+    required: true,
+  },
+  "who":{
+   type: String,
+    required: true,
+  }
   startingDate:{
    type:Date,
    required:true,
