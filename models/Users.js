@@ -30,7 +30,7 @@ const recordSchema = new mongoose.Schema({
   who:{
    type: String,
     required: true,
-  }
+  },
   startingDate:{
    type:Date,
    required:true,
