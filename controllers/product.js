@@ -56,9 +56,9 @@ const AddUsers = async (req, res) => {
   const { username, id, user, dailyInstallment, amount,details,email,who } = req.body;
    console.log(details)
   // Validate input fields
-  if (!username || !id || !user || !dailyInstallment || !amount || !details || !email || !who) {
+  if (!username || !id || !user || !dailyInstallment || !amount || !details || !email ||!who ) {
     return res.status(400).json({
-      msg: 'Please provide all fields (username, id, user, dailyInstallment, amount,details,email,who )'
+      msg: 'Please provide all fields (username, id, user, dailyInstallment, amount,details,email,who)'
     });
   }
 
