@@ -43,13 +43,20 @@ const getAllDetails = async (req, res) => {
 // GET: All user documents (each with their embedded records)
 const getAllProduct = async (req, res) => {
   try {
-    // Exclude _id and __v if desired
-    const data = await User.find({}, { _id: 0, __v: 0 });
+    const { username } = req.query;
+
+    // Build filter object
+    const filter = username ? { username: username } : {};
+
+    // Fetch from User collection, excluding _id and __v
+    const data = await User.find(filter, { _id: 0, __v: 0 });
+
     res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ msg: "Error fetching data", error });
   }
 };
+
 
 // POST: Add a new record for a user (or create a new user document if one doesn't exist)
 const AddUsers = async (req, res) => {
