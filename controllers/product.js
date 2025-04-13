@@ -1,9 +1,10 @@
 const Login = require("../models/Logins");
-const User = require("../models/Users");
+const User = require("../models/Users"); // Use this require statement and remove any duplicates
 
+// POST: Login user
 const loginUser = async (req, res) => {
   const { username, password } = req.body;
-  console.log(req.body)
+  console.log(req.body);
   if (!username || !password) {
     return res.status(400).json({ msg: 'Please provide both username and password' });
   }
@@ -22,14 +23,14 @@ const loginUser = async (req, res) => {
     }
 
     // If valid, send 'ok' response
-    return res.status(200).json({ msg: 'ok',"user":user.User });
-
+    return res.status(200).json({ msg: 'ok', "user": user.User });
+    
   } catch (error) {
     res.status(500).json({ msg: 'Server error', error });
   }
 };
 
-// GET: All login details (only Username and Password)
+// GET: All login details (only Username, Password, and User)
 const getAllDetails = async (req, res) => {
   try {
     const data = await Login.find({}, 'Username Password User -_id');
@@ -39,96 +40,122 @@ const getAllDetails = async (req, res) => {
   }
 };
 
-// GET: All user records
+// GET: All user documents (each with their embedded records)
 const getAllProduct = async (req, res) => {
   try {
+    // Exclude _id and __v if desired
     const data = await User.find({}, { _id: 0, __v: 0 });
-    res.status(200).json(data); 
+    res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ msg: "Error fetching data", error });
   }
 };
 
-// POST: Add a new user
+// POST: Add a new record for a user (or create a new user document if one doesn't exist)
 const AddUsers = async (req, res) => {
-  const data = req.body;
-
+  const { username, id, user, dailyInstallment, amount,details } = req.body;
+   console.log(details)
   // Validate input fields
-  if (!data.id || !data.user || !data.dailyInstallment || !data.amount) {
-    return res.status(400).json({ msg: 'Please provide all fields (id, user, dailyInstallment, amount)' });
+  if (!username || !id || !user || !dailyInstallment || !amount || !details) {
+    return res.status(400).json({
+      msg: 'Please provide all fields (username, id, user, dailyInstallment, amount,details)'
+    });
   }
 
   try {
+    // Check if the user document already exists
+    let existingUser = await User.findOne({ username });
 
-    const existingUser = await User.findOne({ id: data.id });
-
+    // If user exists, check if a record with the same id exists inside data
     if (existingUser) {
-      return res.status(409).json({ msg: 'User with this ID already exists' }); // 409 Conflict
+      const duplicate = existingUser.data.find(record => record.id === id);
+      if (duplicate) {
+        return res.status(409).json({ msg: 'Record with this id already exists for this user' });
+      }
+      // Push new record into the data array
+      existingUser.data.push({ id, user, dailyInstallment, amount,details });
+      const result = await existingUser.save();
+      return res.status(201).json({ msg: 'Record added to existing user', user: result });
+    } else {
+      // Create a new user document with the first embedded record
+      const newUser = new User({
+        username,
+        data: [{ id, user, dailyInstallment, amount,details }]
+      });
+      const result = await newUser.save();
+      return res.status(201).json({ msg: 'User created successfully', user: result });
     }
-
-    
-    const newUser = new User(data);
-    const result = await newUser.save();
-    res.status(201).json({ msg: 'User created successfully', user: result });
   } catch (error) {
-    res.status(500).json({ msg: 'Error adding user', error });
+    res.status(500).json({ msg: 'Error adding user record', error });
   }
 };
 
-
-// PUT: Update entire user by username
+// PUT: Update an entire embedded record for a given user
+// Expecting route parameters: username and record id (recordId)
 const updateUser = async (req, res) => {
-  const { id } = req.params;
-  console.log(id);
-  const updateData = req.body;
+  const { username, id } = req.params;
+  console.log(username,id)
+  const updateData = req.body; // Expect all fields for the embedded record
 
   try {
+    // The $ positional operator updates the matched element in the "data" array.
     const updated = await User.findOneAndUpdate(
-      { id: id },
-      updateData,
+      { username, "data.id": Number(id) },
+      { $set: { "data.$": updateData } },
       { new: true }
     );
     if (!updated) {
-      return res.status(404).json({ msg: 'User not found' });
+      return res.status(404).json({ msg: 'User or record not found' });
     }
-    res.status(200).json({ msg: "User updated", user: updated });
+    res.status(200).json({ msg: "User record updated", user: updated });
   } catch (error) {
-    res.status(500).json({ msg: "Error updating user", error });
+    res.status(500).json({ msg: "Error updating user record", error });
   }
 };
 
-// PATCH: Partial update by username
+// PATCH: Partially update an embedded record for a given user
+// Expecting route parameters: username and record id (recordId)
 const patchUser = async (req, res) => {
-  const { id } = req.params;
+  const { username, id } = req.params;
   const patchData = req.body;
 
   try {
+    // Use the positional operator to update specific fields in the matched embedded record
     const patched = await User.findOneAndUpdate(
-      { id: id },
-      { $set: patchData },
+      { username, "data.id": Number(id) },
+      { $set: Object.keys(patchData).reduce((acc, key) => {
+          // create the update key, e.g., "data.$.dailyInstallment": patchData.dailyInstallment
+          acc[`data.$.${key}`] = patchData[key];
+          return acc;
+        }, {}) },
       { new: true }
     );
     if (!patched) {
-      return res.status(404).json({ msg: 'User not found' });
+      return res.status(404).json({ msg: 'User or record not found' });
     }
-    res.status(200).json({ msg: "User patched", user: patched });
+    res.status(200).json({ msg: "User record patched", user: patched });
   } catch (error) {
-    res.status(500).json({ msg: "Error patching user", error });
+    res.status(500).json({ msg: "Error patching user record", error });
   }
 };
 
-// DELETE: Remove user by username
+// DELETE: Remove an embedded record by username and record id
 const deleteUser = async (req, res) => {
-  const { id } = req.params;
+  const { username, id } = req.params;
 
   try {
-    const result = await User.findOneAndDelete({ id: id });
+    // Use $pull to remove the record that matches the given id from the data array
+    const result = await User.findOneAndUpdate(
+      { username },
+      { $pull: { data: { id: Number(id) } } },
+      { new: true }
+    );
     if (!result) {
-      return res.status(404).json({ msg: 'User not found' });
+      return res.status(404).json({ msg: 'User not found or record does not exist' });
     }
-    res.status(200).json({ msg: "User deleted", user: result });
+    res.status(200).json({ msg: "User record deleted", user: result });
   } catch (error) {
-    res.status(500).json({ msg: "Error deleting user", error });
+    res.status(500).json({ msg: "Error deleting user record", error });
   }
 };
 
