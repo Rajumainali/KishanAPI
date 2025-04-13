@@ -27,7 +27,7 @@ const recordSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  "who":{
+  who:{
    type: String,
     required: true,
   }
