@@ -53,12 +53,12 @@ const getAllProduct = async (req, res) => {
 
 // POST: Add a new record for a user (or create a new user document if one doesn't exist)
 const AddUsers = async (req, res) => {
-  const { username, id, user, dailyInstallment, amount,details } = req.body;
+  const { username, id, user, dailyInstallment, amount,details,email,who } = req.body;
    console.log(details)
   // Validate input fields
-  if (!username || !id || !user || !dailyInstallment || !amount || !details) {
+  if (!username || !id || !user || !dailyInstallment || !amount || !details || !email || !who) {
     return res.status(400).json({
-      msg: 'Please provide all fields (username, id, user, dailyInstallment, amount,details)'
+      msg: 'Please provide all fields (username, id, user, dailyInstallment, amount,details,email,who )'
     });
   }
 
@@ -73,14 +73,14 @@ const AddUsers = async (req, res) => {
         return res.status(409).json({ msg: 'Record with this id already exists for this user' });
       }
       // Push new record into the data array
-      existingUser.data.push({ id, user, dailyInstallment, amount,details });
+      existingUser.data.push({ id, user, dailyInstallment, amount,details,email,who });
       const result = await existingUser.save();
       return res.status(201).json({ msg: 'Record added to existing user', user: result });
     } else {
       // Create a new user document with the first embedded record
       const newUser = new User({
         username,
-        data: [{ id, user, dailyInstallment, amount,details }]
+        data: [{ id, user, dailyInstallment, amount,details,email,who }]
       });
       const result = await newUser.save();
       return res.status(201).json({ msg: 'User created successfully', user: result });
